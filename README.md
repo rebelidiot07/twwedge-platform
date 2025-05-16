@@ -1,2 +1,1 @@
-# twwedge-platform
-Platform source code goes here.
+# Full production version of TWWedge Platform.
