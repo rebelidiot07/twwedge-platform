@@ -1,1 +1,2 @@
-# Full production version of TWWedge Platform.
+# TWWedge Frontend
+This contains the full user interface structure.
