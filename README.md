@@ -1,2 +1,2 @@
-# TWWedge Frontend
-This contains the full user interface structure.
+# Scanner Interface
+Demo interface with placeholder candle data and module toggles.

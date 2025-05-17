@@ -3,33 +3,63 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TWWedge Trading Platform</title>
+    <title>TWWedge Scanner Interface</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body {
-            font-family: sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #111;
-            color: #eee;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            text-align: center;
-        }
-        h1 {
-            font-size: 3rem;
-        }
-        p {
-            font-size: 1.2rem;
-            max-width: 600px;
-        }
+        body { margin: 0; background: #0d0d0d; color: #fff; font-family: Arial, sans-serif; }
+        #header { padding: 1em; background: #1a1a1a; text-align: center; font-size: 1.5em; }
+        #controls { padding: 1em; background: #262626; display: flex; justify-content: center; gap: 1em; }
+        #chart { width: 100%; height: 80vh; background: #111; }
+        button { padding: 0.5em 1em; font-size: 1em; }
     </style>
 </head>
 <body>
-    <h1>Welcome to the TWWedge Trading Platform</h1>
-    <p>This is the upgraded interface for managing scanner logic, ATT, Order Blocks, PDR, and trailing stops. Further functionality will load as modules complete.</p>
+    <div id="header">TWWedge Scanner Interface (Demo Mode)</div>
+    <div id="controls">
+        <button onclick="toggle('OB')">Toggle OB</button>
+        <button onclick="toggle('PDR')">Toggle PDR</button>
+        <button onclick="toggle('ATT')">Toggle ATT</button>
+        <button onclick="toggle('Trail')">Toggle Trail</button>
+    </div>
+    <canvas id="chart"></canvas>
+    <script>
+        const canvas = document.getElementById('chart');
+        const ctx = canvas.getContext('2d');
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight * 0.8;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Dummy candlestick data
+        const dummyData = Array.from({length: 100}, (_, i) => ({
+            x: i * 10 + 50,
+            open: 300 + Math.random() * 20,
+            high: 320 + Math.random() * 20,
+            low: 290 + Math.random() * 20,
+            close: 310 + Math.random() * 20
+        }));
+
+        function drawCandles(data) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            data.forEach((c, i) => {
+                let color = c.close > c.open ? 'lime' : 'red';
+                ctx.strokeStyle = color;
+                ctx.beginPath();
+                ctx.moveTo(c.x, c.high);
+                ctx.lineTo(c.x, c.low);
+                ctx.stroke();
+                ctx.fillStyle = color;
+                ctx.fillRect(c.x - 2, Math.min(c.open, c.close), 4, Math.abs(c.open - c.close));
+            });
+        }
+
+        drawCandles(dummyData);
+
+        function toggle(type) {
+            alert(type + " overlay toggled (simulated)");
+        }
+    </script>
 </body>
 </html>
