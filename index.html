@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TWWedge Scanner Interface</title>
+    <title>TWWedge Overlay Scanner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { margin: 0; background: #0d0d0d; color: #fff; font-family: Arial, sans-serif; }
@@ -14,12 +14,11 @@
     </style>
 </head>
 <body>
-    <div id="header">TWWedge Scanner Interface (Demo Mode)</div>
+    <div id="header">TWWedge Overlay Scanner (Demo Mode)</div>
     <div id="controls">
-        <button onclick="toggle('OB')">Toggle OB</button>
-        <button onclick="toggle('PDR')">Toggle PDR</button>
-        <button onclick="toggle('ATT')">Toggle ATT</button>
-        <button onclick="toggle('Trail')">Toggle Trail</button>
+        <button onclick="toggleOverlay('OB')">Toggle OB</button>
+        <button onclick="toggleOverlay('PDR')">Toggle PDR</button>
+        <button onclick="toggleOverlay('ATT')">Toggle ATT</button>
     </div>
     <canvas id="chart"></canvas>
     <script>
@@ -32,7 +31,6 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        // Dummy candlestick data
         const dummyData = Array.from({length: 100}, (_, i) => ({
             x: i * 10 + 50,
             open: 300 + Math.random() * 20,
@@ -41,9 +39,11 @@
             close: 310 + Math.random() * 20
         }));
 
+        let showOB = true, showPDR = true, showATT = true;
+
         function drawCandles(data) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            data.forEach((c, i) => {
+            data.forEach(c => {
                 let color = c.close > c.open ? 'lime' : 'red';
                 ctx.strokeStyle = color;
                 ctx.beginPath();
@@ -53,13 +53,49 @@
                 ctx.fillStyle = color;
                 ctx.fillRect(c.x - 2, Math.min(c.open, c.close), 4, Math.abs(c.open - c.close));
             });
+
+            if (showOB) drawOBZones();
+            if (showPDR) drawPDRProjection();
+            if (showATT) drawATTMarkers();
+        }
+
+        function drawOBZones() {
+            ctx.fillStyle = 'rgba(0, 255, 0, 0.2)';
+            ctx.fillRect(150, 280, 80, 40);
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+            ctx.fillRect(400, 330, 80, 40);
+        }
+
+        function drawPDRProjection() {
+            ctx.strokeStyle = 'yellow';
+            ctx.setLineDash([5, 3]);
+            ctx.beginPath();
+            ctx.moveTo(250, 300);
+            ctx.lineTo(350, 260);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function drawATTMarkers() {
+            [275, 315, 355].forEach((y, i) => {
+                ctx.strokeStyle = '#00ffff';
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+                ctx.fillStyle = '#00ffff';
+                ctx.fillText(`Index ${29 + i * 12}`, 10, y - 5);
+            });
+        }
+
+        function toggleOverlay(type) {
+            if (type === 'OB') showOB = !showOB;
+            if (type === 'PDR') showPDR = !showPDR;
+            if (type === 'ATT') showATT = !showATT;
+            drawCandles(dummyData);
         }
 
         drawCandles(dummyData);
-
-        function toggle(type) {
-            alert(type + " overlay toggled (simulated)");
-        }
     </script>
 </body>
 </html>

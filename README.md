@@ -1,2 +1,2 @@
-# Scanner Interface
-Demo interface with placeholder candle data and module toggles.
+# TWWedge Overlay Upgrade
+Includes OB, PDR, and ATT visual overlays.
