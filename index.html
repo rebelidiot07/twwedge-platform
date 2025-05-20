@@ -2,100 +2,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>TWWedge Overlay Scanner</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body { margin: 0; background: #0d0d0d; color: #fff; font-family: Arial, sans-serif; }
-        #header { padding: 1em; background: #1a1a1a; text-align: center; font-size: 1.5em; }
-        #controls { padding: 1em; background: #262626; display: flex; justify-content: center; gap: 1em; }
-        #chart { width: 100%; height: 80vh; background: #111; }
-        button { padding: 0.5em 1em; font-size: 1em; }
-    </style>
+  <meta charset="UTF-8" />
+  <title>TWWedge Live Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { margin: 0; background: #111; color: #fff; font-family: Arial, sans-serif; }
+    #header { padding: 1em; background: #1a1a1a; text-align: center; font-size: 1.5em; }
+    #controls { padding: 1em; background: #222; display: flex; justify-content: center; gap: 1em; }
+    #chart { width: 100%; height: 80vh; background: #000; }
+    button { padding: 0.5em 1em; font-size: 1em; }
+  </style>
 </head>
 <body>
-    <div id="header">TWWedge Overlay Scanner (Demo Mode)</div>
-    <div id="controls">
-        <button onclick="toggleOverlay('OB')">Toggle OB</button>
-        <button onclick="toggleOverlay('PDR')">Toggle PDR</button>
-        <button onclick="toggleOverlay('ATT')">Toggle ATT</button>
-    </div>
-    <canvas id="chart"></canvas>
-    <script>
-        const canvas = document.getElementById('chart');
-        const ctx = canvas.getContext('2d');
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight * 0.8;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+  <div id="header">TWWedge Live Scanner – BTCUSDT</div>
+  <div id="controls">
+    <button onclick="fetchLiveData()">Refresh Live</button>
+  </div>
+  <canvas id="chart"></canvas>
+  <script>
+    const canvas = document.getElementById("chart");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight * 0.8;
 
-        const dummyData = Array.from({length: 100}, (_, i) => ({
-            x: i * 10 + 50,
-            open: 300 + Math.random() * 20,
-            high: 320 + Math.random() * 20,
-            low: 290 + Math.random() * 20,
-            close: 310 + Math.random() * 20
-        }));
+    async function fetchLiveData() {
+      const res = await fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=50");
+      const data = await res.json();
+      drawCandles(data);
+    }
 
-        let showOB = true, showPDR = true, showATT = true;
+    function drawCandles(data) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let x = 10;
+      for (let c of data) {
+        const open = parseFloat(c[1]);
+        const high = parseFloat(c[2]);
+        const low = parseFloat(c[3]);
+        const close = parseFloat(c[4]);
+        const color = close >= open ? "lime" : "red";
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(x, 400 - high);
+        ctx.lineTo(x, 400 - low);
+        ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.fillRect(x - 2, 400 - Math.max(open, close), 4, Math.abs(open - close));
+        x += 10;
+      }
+    }
 
-        function drawCandles(data) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            data.forEach(c => {
-                let color = c.close > c.open ? 'lime' : 'red';
-                ctx.strokeStyle = color;
-                ctx.beginPath();
-                ctx.moveTo(c.x, c.high);
-                ctx.lineTo(c.x, c.low);
-                ctx.stroke();
-                ctx.fillStyle = color;
-                ctx.fillRect(c.x - 2, Math.min(c.open, c.close), 4, Math.abs(c.open - c.close));
-            });
-
-            if (showOB) drawOBZones();
-            if (showPDR) drawPDRProjection();
-            if (showATT) drawATTMarkers();
-        }
-
-        function drawOBZones() {
-            ctx.fillStyle = 'rgba(0, 255, 0, 0.2)';
-            ctx.fillRect(150, 280, 80, 40);
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
-            ctx.fillRect(400, 330, 80, 40);
-        }
-
-        function drawPDRProjection() {
-            ctx.strokeStyle = 'yellow';
-            ctx.setLineDash([5, 3]);
-            ctx.beginPath();
-            ctx.moveTo(250, 300);
-            ctx.lineTo(350, 260);
-            ctx.stroke();
-            ctx.setLineDash([]);
-        }
-
-        function drawATTMarkers() {
-            [275, 315, 355].forEach((y, i) => {
-                ctx.strokeStyle = '#00ffff';
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
-                ctx.stroke();
-                ctx.fillStyle = '#00ffff';
-                ctx.fillText(`Index ${29 + i * 12}`, 10, y - 5);
-            });
-        }
-
-        function toggleOverlay(type) {
-            if (type === 'OB') showOB = !showOB;
-            if (type === 'PDR') showPDR = !showPDR;
-            if (type === 'ATT') showATT = !showATT;
-            drawCandles(dummyData);
-        }
-
-        drawCandles(dummyData);
-    </script>
+    fetchLiveData();
+  </script>
 </body>
 </html>
