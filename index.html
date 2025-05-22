@@ -3,32 +3,58 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>TWWedge Live Scanner</title>
+  <title>TWWedge Top 60 Live Scanner</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body { margin: 0; background: #111; color: #fff; font-family: Arial, sans-serif; }
-    #header { padding: 1em; background: #1a1a1a; text-align: center; font-size: 1.5em; }
-    #controls { padding: 1em; background: #222; display: flex; justify-content: center; gap: 1em; }
+    body { margin: 0; font-family: Arial, sans-serif; background: #111; color: #fff; }
+    #header { padding: 1em; text-align: center; background: #1a1a1a; font-size: 1.5em; }
+    #controls { padding: 1em; display: flex; justify-content: center; gap: 1em; background: #222; }
     #chart { width: 100%; height: 80vh; background: #000; }
-    button { padding: 0.5em 1em; font-size: 1em; }
+    select, button { padding: 0.5em 1em; font-size: 1em; }
   </style>
 </head>
 <body>
-  <div id="header">TWWedge Live Scanner – BTCUSDT</div>
+  <div id="header">TWWedge Top 60 Scanner – Live Mode</div>
   <div id="controls">
-    <button onclick="fetchLiveData()">Refresh Live</button>
+    <select id="pairSelect"></select>
+    <button onclick="refreshData()">Refresh</button>
   </div>
   <canvas id="chart"></canvas>
   <script>
-    const canvas = document.getElementById("chart");
-    const ctx = canvas.getContext("2d");
+    const canvas = document.getElementById('chart');
+    const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight * 0.8;
+    let currentPair = 'BTCUSDT';
 
-    async function fetchLiveData() {
-      const res = await fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=50");
+    async function loadTopPairs() {
+      const res = await fetch('https://api.binance.com/api/v3/ticker/24hr');
       const data = await res.json();
-      drawCandles(data);
+      const usdtPairs = data.filter(d => d.symbol.endsWith('USDT')).sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume)).slice(0, 60);
+      const select = document.getElementById('pairSelect');
+      usdtPairs.forEach(pair => {
+        const opt = document.createElement('option');
+        opt.value = pair.symbol;
+        opt.textContent = pair.symbol;
+        select.appendChild(opt);
+      });
+      currentPair = usdtPairs[0].symbol;
+      select.value = currentPair;
+      select.addEventListener('change', e => {
+        currentPair = e.target.value;
+        refreshData();
+      });
+      refreshData();
+    }
+
+    async function refreshData() {
+      try {
+        const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${currentPair}&interval=1m&limit=50`);
+        const data = await res.json();
+        drawCandles(data);
+      } catch (err) {
+        alert("Failed to load data. Try again later.");
+      }
     }
 
     function drawCandles(data) {
@@ -51,7 +77,8 @@
       }
     }
 
-    fetchLiveData();
+    loadTopPairs();
+    setInterval(refreshData, 30000);
   </script>
 </body>
 </html>
