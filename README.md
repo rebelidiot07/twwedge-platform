@@ -1,1 +1,1 @@
-TWWedge Scanner with Full UI: axes, hover, snap, OB zones, and top 60 pairs.
+TWWedge Scanner with full UI: candles, OB zones, hover, snap line, and axes.
