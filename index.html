@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>TWWedge Live OB Scanner</title>
+  <title>TWWedge OB Scanner (Scaled)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body { margin: 0; background: #111; color: #fff; font-family: Arial, sans-serif; }
@@ -14,7 +14,7 @@
   </style>
 </head>
 <body>
-  <div id="header">TWWedge Live OB Scanner</div>
+  <div id="header">TWWedge OB Scanner (Scaled)</div>
   <div id="controls">
     <select id="pairSelect"></select>
     <button onclick="refreshData()">Refresh</button>
@@ -55,6 +55,12 @@
 
     function drawChart(data) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const prices = data.flatMap(c => [parseFloat(c[2]), parseFloat(c[3])]);
+      const max = Math.max(...prices);
+      const min = Math.min(...prices);
+      const scaleY = canvas.height / (max - min);
+      const baseY = max;
+
       let x = 10;
       const obZones = [];
 
@@ -66,14 +72,19 @@
         const color = close >= open ? "lime" : "red";
         ctx.strokeStyle = color;
         ctx.beginPath();
-        ctx.moveTo(x, 400 - high);
-        ctx.lineTo(x, 400 - low);
+        ctx.moveTo(x, (baseY - high) * scaleY);
+        ctx.lineTo(x, (baseY - low) * scaleY);
         ctx.stroke();
         ctx.fillStyle = color;
-        ctx.fillRect(x - 2, 400 - Math.max(open, close), 4, Math.abs(open - close));
+        ctx.fillRect(x - 2, (baseY - Math.max(open, close)) * scaleY, 4, Math.abs(open - close) * scaleY);
 
         if (close < open && open > prevClose && close < prevClose) {
-          obZones.push({ x, y: 400 - high, width: 30, height: high - low });
+          obZones.push({
+            x,
+            y: (baseY - high) * scaleY,
+            width: 30,
+            height: (high - low) * scaleY
+          });
         }
 
         x += 10;

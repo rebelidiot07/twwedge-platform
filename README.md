@@ -1,2 +1,1 @@
-# TWWedge OB Logic Scanner
-Live OB zone detection based on real Binance price data.
+Live OB scanner with dynamic Y-scaling to fit actual price levels.
