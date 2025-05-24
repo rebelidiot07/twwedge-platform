@@ -1,1 +1,1 @@
-TWWedge Scanner – full UI with overlays, live data, axes, and snap line.
+TWWedge Live Scanner — complete UI structure ready for deployment.
