@@ -1,1 +1,1 @@
-TWWedge scanner with candles, OBs, hover, snap, axes. Final working UI package.
+TWWedge Scanner – full UI with overlays, live data, axes, and snap line.
