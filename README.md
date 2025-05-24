@@ -1,1 +1,1 @@
-TWWedge Live Scanner — complete UI structure ready for deployment.
+TWWedge Scanner – structure ready for final working UI reupload.
