@@ -1,1 +1,1 @@
-TWWedge Scanner with full UI: candles, OB zones, hover, snap line, and axes.
+TWWedge scanner with candles, OBs, hover, snap, axes. Final working UI package.
