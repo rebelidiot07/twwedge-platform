@@ -1,1 +1,1 @@
-TWWedge Scanner UI upgrade with dynamic chart, overlays, hover, axes.
+TWWedge Scanner with Full UI: axes, hover, snap, OB zones, and top 60 pairs.
