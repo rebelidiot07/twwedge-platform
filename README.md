@@ -1,1 +1,1 @@
-Live OB scanner with dynamic Y-scaling to fit actual price levels.
+TWWedge Scanner UI upgrade with dynamic chart, overlays, hover, axes.
