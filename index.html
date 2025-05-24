@@ -3,29 +3,29 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>TWWedge Top 60 Live Scanner + Overlays</title>
+  <title>TWWedge Live OB Scanner</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body { margin: 0; font-family: Arial, sans-serif; background: #111; color: #fff; }
-    #header { padding: 1em; text-align: center; background: #1a1a1a; font-size: 1.5em; }
-    #controls { padding: 1em; display: flex; justify-content: center; gap: 1em; background: #222; }
+    body { margin: 0; background: #111; color: #fff; font-family: Arial, sans-serif; }
+    #header { background: #1a1a1a; padding: 1em; text-align: center; font-size: 1.5em; }
+    #controls { background: #222; padding: 1em; display: flex; justify-content: center; gap: 1em; }
     #chart { width: 100%; height: 80vh; background: #000; }
     select, button { padding: 0.5em 1em; font-size: 1em; }
   </style>
 </head>
 <body>
-  <div id="header">TWWedge Live Scanner – Overlays Enabled</div>
+  <div id="header">TWWedge Live OB Scanner</div>
   <div id="controls">
     <select id="pairSelect"></select>
     <button onclick="refreshData()">Refresh</button>
   </div>
   <canvas id="chart"></canvas>
   <script>
-    const canvas = document.getElementById('chart');
-    const ctx = canvas.getContext('2d');
+    const canvas = document.getElementById("chart");
+    const ctx = canvas.getContext("2d");
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight * 0.8;
-    let currentPair = 'BTCUSDT';
+    let currentPair = "BTCUSDT";
 
     async function loadTopPairs() {
       const res = await fetch('https://api.binance.com/api/v3/ticker/24hr');
@@ -40,7 +40,7 @@
       });
       currentPair = usdtPairs[0].symbol;
       select.value = currentPair;
-      select.addEventListener('change', e => {
+      select.addEventListener("change", e => {
         currentPair = e.target.value;
         refreshData();
       });
@@ -48,23 +48,21 @@
     }
 
     async function refreshData() {
-      try {
-        const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${currentPair}&interval=1m&limit=50`);
-        const data = await res.json();
-        drawCandles(data);
-      } catch (err) {
-        alert("Failed to load data. Try again later.");
-      }
+      const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${currentPair}&interval=1m&limit=50`);
+      const data = await res.json();
+      drawChart(data);
     }
 
-    function drawCandles(data) {
+    function drawChart(data) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       let x = 10;
-      data.forEach((c) => {
-        const open = parseFloat(c[1]);
-        const high = parseFloat(c[2]);
-        const low = parseFloat(c[3]);
-        const close = parseFloat(c[4]);
+      const obZones = [];
+
+      for (let i = 1; i < data.length; i++) {
+        const prev = data[i - 1];
+        const curr = data[i];
+        const open = parseFloat(curr[1]), high = parseFloat(curr[2]), low = parseFloat(curr[3]), close = parseFloat(curr[4]);
+        const prevClose = parseFloat(prev[4]);
         const color = close >= open ? "lime" : "red";
         ctx.strokeStyle = color;
         ctx.beginPath();
@@ -73,29 +71,17 @@
         ctx.stroke();
         ctx.fillStyle = color;
         ctx.fillRect(x - 2, 400 - Math.max(open, close), 4, Math.abs(open - close));
-        x += 10;
-      });
-      drawOverlays();
-    }
 
-    function drawOverlays() {
-      ctx.fillStyle = "rgba(0,255,0,0.2)";
-      ctx.fillRect(120, 250, 60, 30);
-      ctx.strokeStyle = "yellow";
-      ctx.setLineDash([5, 3]);
-      ctx.beginPath();
-      ctx.moveTo(300, 270);
-      ctx.lineTo(380, 230);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      [275, 315, 355].forEach((y, i) => {
-        ctx.strokeStyle = '#00ffff';
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
-        ctx.stroke();
-        ctx.fillStyle = '#00ffff';
-        ctx.fillText(`Index ${29 + i * 12}`, 10, y - 5);
+        if (close < open && open > prevClose && close < prevClose) {
+          obZones.push({ x, y: 400 - high, width: 30, height: high - low });
+        }
+
+        x += 10;
+      }
+
+      obZones.forEach(zone => {
+        ctx.fillStyle = "rgba(255,0,0,0.2)";
+        ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
       });
     }
 
