@@ -1,1 +1,1 @@
-TWWedge Scanner – Final UI staging build.
+TWWedge Scanner – Final working UI with overlays and live data.

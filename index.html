@@ -1,1 +1,153 @@
-TWWedge Scanner Final UI – real chart code being rebuilt.
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TWWedge Scanner – Working UI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { margin: 0; background: #111; color: #fff; font-family: Arial, sans-serif; }
+    #header { padding: 1em; text-align: center; font-size: 1.5em; background: #1a1a1a; }
+    #controls { padding: 1em; display: flex; justify-content: center; background: #222; gap: 1em; }
+    #chart-wrapper { position: relative; width: 100%; height: 80vh; }
+    #chart, #overlay { position: absolute; top: 0; left: 0; }
+    #hover-info { position: absolute; top: 10px; left: 10px; background: #333; padding: 0.5em; font-size: 0.9em; display: none; border-radius: 5px; }
+    select, button { padding: 0.5em 1em; font-size: 1em; }
+  </style>
+</head>
+<body>
+  <div id="header">TWWedge Scanner – Final Working UI</div>
+  <div id="controls">
+    <select id="pairSelect"></select>
+    <button onclick="refreshData()">Refresh</button>
+  </div>
+  <div id="chart-wrapper">
+    <canvas id="chart"></canvas>
+    <canvas id="overlay"></canvas>
+    <div id="hover-info"></div>
+  </div>
+  <script>
+    const chart = document.getElementById("chart");
+    const overlay = document.getElementById("overlay");
+    const ctx = chart.getContext("2d");
+    const overlayCtx = overlay.getContext("2d");
+    const hoverInfo = document.getElementById("hover-info");
+    chart.width = overlay.width = window.innerWidth;
+    chart.height = overlay.height = window.innerHeight * 0.8;
+
+    let currentPair = "BTCUSDT";
+    let latestData = [];
+
+    async function loadTopPairs() {
+      const res = await fetch("https://api.binance.com/api/v3/ticker/24hr");
+      const data = await res.json();
+      const pairs = data.filter(d => d.symbol.endsWith("USDT")).sort((a,b)=>parseFloat(b.quoteVolume)-parseFloat(a.quoteVolume)).slice(0,60);
+      const select = document.getElementById("pairSelect");
+      pairs.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.symbol;
+        opt.textContent = p.symbol;
+        select.appendChild(opt);
+      });
+      select.value = currentPair;
+      select.addEventListener("change", e => {
+        currentPair = e.target.value;
+        refreshData();
+      });
+      refreshData();
+    }
+
+    async function refreshData() {
+      const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${currentPair}&interval=1m&limit=50`);
+      const data = await res.json();
+      latestData = data;
+      drawChart(data);
+    }
+
+    function drawChart(data) {
+      ctx.clearRect(0, 0, chart.width, chart.height);
+      overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+      const prices = data.flatMap(c => [parseFloat(c[2]), parseFloat(c[3])]);
+      const max = Math.max(...prices), min = Math.min(...prices);
+      const scaleY = chart.height / (max - min);
+      const baseY = max;
+      const width = 10;
+      let x = 60;
+      const obZones = [];
+
+      data.forEach((c, i) => {
+        const open = parseFloat(c[1]), high = parseFloat(c[2]), low = parseFloat(c[3]), close = parseFloat(c[4]);
+        const color = close >= open ? "lime" : "red";
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(x, (baseY - high) * scaleY);
+        ctx.lineTo(x, (baseY - low) * scaleY);
+        ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.fillRect(x - 3, (baseY - Math.max(open, close)) * scaleY, 6, Math.abs(open - close) * scaleY);
+
+        if (i > 0) {
+          const prevClose = parseFloat(data[i - 1][4]);
+          if (close < open && open > prevClose && close < prevClose) {
+            obZones.push({ x, y: (baseY - high) * scaleY, h: (high - low) * scaleY });
+          }
+        }
+
+        if (i % 10 === 0) {
+          ctx.fillStyle = "#aaa";
+          ctx.fillText(new Date(c[0]).toLocaleTimeString(), x - 20, chart.height - 10);
+        }
+        x += width;
+      });
+
+      for (let p = min; p <= max; p += (max - min) / 10) {
+        const y = (baseY - p) * scaleY;
+        ctx.fillStyle = "#888";
+        ctx.fillText(p.toFixed(2), 0, y);
+        ctx.strokeStyle = "#222";
+        ctx.beginPath();
+        ctx.moveTo(50, y);
+        ctx.lineTo(chart.width, y);
+        ctx.stroke();
+      }
+
+      obZones.forEach(z => {
+        ctx.fillStyle = "rgba(255,0,0,0.2)";
+        ctx.fillRect(z.x - 5, z.y, 30, z.h);
+      });
+    }
+
+    overlay.addEventListener("mousemove", e => {
+      const x = e.offsetX;
+      const idx = Math.floor((x - 60) / 10);
+      const c = latestData[idx];
+      if (!c) return hoverInfo.style.display = "none";
+      const [time, open, high, low, close] = c;
+      hoverInfo.style.display = "block";
+      hoverInfo.style.left = `${x + 10}px`;
+      hoverInfo.style.top = `${e.offsetY + 10}px`;
+      hoverInfo.innerHTML = `
+        <b>${new Date(time).toLocaleTimeString()}</b><br>
+        O: ${parseFloat(open)}<br>
+        H: ${parseFloat(high)}<br>
+        L: ${parseFloat(low)}<br>
+        C: ${parseFloat(close)}
+      `;
+      overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+      overlayCtx.strokeStyle = "#ffff00";
+      overlayCtx.beginPath();
+      overlayCtx.moveTo(x, 0);
+      overlayCtx.lineTo(x, overlay.height);
+      overlayCtx.stroke();
+    });
+
+    overlay.addEventListener("mouseleave", () => {
+      hoverInfo.style.display = "none";
+      overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+    });
+
+    loadTopPairs();
+    setInterval(refreshData, 30000);
+  </script>
+</body>
+</html>
